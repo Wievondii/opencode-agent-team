@@ -62,7 +62,14 @@ const agentConfigs = {
       grep: false
     },
     temperature: 0.2
-  },
+  }
+};
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// subagent 定义（供 opencode.json 的 agent 段引用）
+// 不在 agents 对象中导出，避免 Tab 列表出现 subagent
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const subagentConfigs = {
   planner: {
     name: 'planner',
     description: agentDescriptions.planner,
@@ -140,8 +147,11 @@ module.exports = {
   name: 'opencode-agent-team',
   version: '1.0.0',
   
-  // 导出agent配置
+  // 导出agent配置（只导出 PM，subagent 不在 Tab 出现）
   agents: agentConfigs,
+
+  // subagent 定义（供 opencode.json agent 段使用）
+  subagents: subagentConfigs,
 
   // 导出模板
   templates: templates,
