@@ -443,6 +443,30 @@ export interface Module2Service {
 | playSound(name) | Dev-2 | Dev-1 | 事件触发时 | EventHandler.onShoot() 中 |
 ```
 
+### 🔑 关键语义约束（防止同名状态跳过、初始化死锁）
+
+并行开发最大风险：接口匹配但语义不一致。以下约束必须明确写入接口规范：
+
+| 约束规则 | 说明 | 错误示例 |
+|---------|------|---------|
+| **初始状态必须触发回调** | 系统启动时，即使初始状态与默认状态相同，setState 也必须触发 onEnter。或提供 `force=true` 参数强制触发 | ❌ `setState('menu')` 发现已是 'menu' → 跳过，导致 UIManager 收不到通知 |
+| **同名状态不跳过** | setState(x) 即使当前已是 x，也应通知订阅者（除非显式指定 skipIfSame=true） | ❌ GameStateMachine 不触发回调 → UI 永远停留在初始状态 |
+| **初始化顺序声明** | 明确模块初始化顺序：A.init() → B.init() → C.init()，避免循环等待 | ❌ A 等 B ready，B 等 A ready |
+| **幂等性声明** | 明确哪些方法是幂等的（可重复调用无副作用），哪些不是 | ❌ Dev-1 认为 setState 幂等，Dev-3 依赖非幂等行为 |
+
+### 关键接口语义模板
+
+```markdown
+### setState 方法语义规定
+
+| 属性 | 规定 |
+|------|------|
+| 相同状态行为 | **必须触发 onEnter 回调**（不跳过） |
+| 可选参数 | `force?: boolean` — true 时强制执行所有副作用 |
+| 初始化行为 | GameEngine.init() 最后一步调用 `setState('menu', force=true)` |
+| 回调顺序 | onExit(旧状态) → 更新状态 → onEnter(新状态) |
+```
+
 ### 集成责任人
 
 - 指定**一个 Developer** 为集成负责人（通常是引擎/主控模块的 Developer）

@@ -46,6 +46,9 @@ tools:
    - [ ] 暴露的接口方法已被调用方正确调用（对照 Planner 的"接口调用关系表"）
    - [ ] 没有未使用的死代码（定义了但从未被调用的方法/类）
    - [ ] 如果提供了 init()/register()/add() 方法，确认调用方已正确调用
+   - [ ] 🔑 如果实现了状态机：`setState(initialValue)` 必须触发 `onEnter` 回调（同名状态不跳过）。验证方法：在 `onEnter` 里加 console.log，确认初始化时打印了
+   - [ ] 🔑 如果实现了 UI 管理器：确认 `showMenu()`/`showGame()` 等入口方法被正确调用，无"双 UI 同时存在"问题
+   - [ ] 🔑 如果有回调注册（如 `onEnter`/`onStateChange`）：确认注册在 `setState` 之前完成，避免回调先于注册被触发
 
 </core_principles>
 
