@@ -9,32 +9,28 @@
     "planner": {
       "status": "idle",
       "session_id": null,
+      "task_id": null,
       "started_at": null,
       "completed_at": null,
       "output": null
     },
     "developer": {
       "status": "idle",
-      "session_id": null,
-      "started_at": null,
-      "completed_at": null,
-      "modules": [],
-      "files": []
+      "instances": [],
+      "modules": []
     },
     "reviewer": {
       "status": "idle",
       "session_id": null,
-      "started_at": null,
-      "completed_at": null,
-      "reviewers": [],
+      "task_id": null,
       "conclusion": null
     },
     "tester": {
       "status": "idle",
       "session_id": null,
+      "task_id": null,
       "started_at": null,
       "completed_at": null,
-      "task_id": null,
       "result": null
     }
   },
@@ -44,7 +40,12 @@
     "in_progress": 0,
     "pending": 0
   },
-  "task_ids": {},
+  "task_ids": {
+    "planner": null,
+    "developers": {},
+    "reviewer": null,
+    "tester": null
+  },
   "errors": [],
   "learnings": []
 }

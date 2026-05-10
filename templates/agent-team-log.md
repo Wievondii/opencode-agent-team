@@ -57,9 +57,7 @@
 
 ### 审查策略
 
-- 小任务：1 个 Reviewer 串行审查所有模块
-- 大任务：多个 Reviewer 并行审查不同模块
-- 本次任务：[小/大]，建议 [1/N] 个 Reviewer
+- 🔑 始终使用 1 个 Reviewer 串行审查（防止 git commit 冲突）
 
 ---
 

@@ -147,9 +147,10 @@ permission:
 2. **修改的文件**（查看变更内容）
 
 ```bash
-# 使用 git diff 查看本轮变更
-git diff HEAD~1 --name-only
-git diff HEAD~1
+# 查看未提交的变更（避免 HEAD~1 在首轮或未提交时失效）
+git status --short
+git diff --cached
+git diff
 ```
 
 **审查范围：**
