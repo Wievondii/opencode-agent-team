@@ -180,6 +180,85 @@ module.exports = {
   // 提供读取模板的方法
   getTemplate(name) {
     return templates[name] || null;
+  },
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // #9 修复: install() 自动部署文件到 ~/.config/opencode/
+  // PM 引用 ~/.config/opencode/templates/comm-log.md
+  //          ~/.config/opencode/agent-team/boulder.json
+  // install() 确保这些文件存在
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  install() {
+    const home = process.env.USERPROFILE || process.env.HOME || '~';
+    const opencodeDir = path.join(home, '.config', 'opencode');
+    
+    // 目标路径
+    const targets = {
+      templates: {
+        dir: path.join(opencodeDir, 'templates'),
+        files: [
+          { name: 'comm-log.md', source: 'agent-team-log.md' },
+          { name: 'dev-log.md', source: 'agent-team-log.md' },
+          { name: 'review-log.md', source: 'agent-team-log.md' },
+          { name: 'test-log.md', source: 'agent-team-log.md' }
+        ]
+      },
+      agentTeam: {
+        dir: path.join(opencodeDir, 'agent-team'),
+        files: [
+          { name: 'boulder.json', source: 'boulder.json' }
+        ],
+        subdirs: ['errors', 'rounds', 'notepads', 'tasks']
+      }
+    };
+
+    const installed = [];
+    const skipped = [];
+
+    try {
+      // 部署模板
+      const tplDir = targets.templates.dir;
+      fs.mkdirSync(tplDir, { recursive: true });
+      for (const f of targets.templates.files) {
+        const dest = path.join(tplDir, f.name);
+        if (!fs.existsSync(dest)) {
+          fs.copyFileSync(
+            path.join(__dirname, '..', 'templates', f.source),
+            dest
+          );
+          installed.push(`templates/${f.name}`);
+        } else {
+          skipped.push(`templates/${f.name} (already exists)`);
+        }
+      }
+
+      // 部署 agent-team 目录和文件
+      const atDir = targets.agentTeam.dir;
+      fs.mkdirSync(atDir, { recursive: true });
+      
+      // 创建子目录
+      for (const sd of targets.agentTeam.subdirs) {
+        fs.mkdirSync(path.join(atDir, sd), { recursive: true });
+      }
+
+      // 复制 boulder.json（仅在目标不存在时）
+      const boulderDest = path.join(atDir, 'boulder.json');
+      if (!fs.existsSync(boulderDest)) {
+        fs.copyFileSync(
+          path.join(__dirname, '..', 'agent-team', 'boulder.json'),
+          boulderDest
+        );
+        installed.push('agent-team/boulder.json');
+      } else {
+        skipped.push('agent-team/boulder.json (already exists)');
+      }
+
+      console.log(`[opencode-agent-team] install: ${installed.length} files deployed, ${skipped.length} skipped`);
+      return { installed, skipped };
+    } catch (e) {
+      console.error('[opencode-agent-team] install failed:', e.message);
+      throw e;
+    }
   }
 };
 

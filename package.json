@@ -4,7 +4,8 @@
   "description": "OpenCode Agent Team plugin - 协调策划师/开发者/审查员/测试员四个子agent，通过Task + task_id实现持久化开发团队",
   "main": "src/index.js",
   "scripts": {
-    "test": "echo \"No tests yet\""
+    "test": "node src/index.js",
+    "postinstall": "node -e \"require('./src/index.js').install()\""
   },
   "keywords": [
     "opencode",
