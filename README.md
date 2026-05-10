@@ -21,7 +21,7 @@ npm install -g opencode-agent-team
 ### 方式 2：本地开发安装
 
 ```bash
-git clone https://github.com/your-username/opencode-agent-team.git
+git clone https://github.com/Wievondii/opencode-agent-team.git
 cd opencode-agent-team
 npm link
 ```
@@ -150,7 +150,7 @@ npm link
 
 ## 贡献
 
-欢迎提交 Issue 和 Pull Request！
+欢迎提交 Issue 和 Pull Request 到 [github.com/Wievondii/opencode-agent-team](https://github.com/Wievondii/opencode-agent-team)！
 
 ## 许可证
 
