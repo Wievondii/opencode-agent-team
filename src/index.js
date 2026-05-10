@@ -201,6 +201,16 @@ module.exports = {
           { name: 'agent-team.md', source: 'agent-team.md' }
         ]
       },
+      agents: {
+        dir: path.join(claudeDir, 'agents'),
+        files: [
+          { name: 'pm.md', source: 'pm.md' },
+          { name: 'planner.md', source: 'planner.md' },
+          { name: 'developer.md', source: 'developer.md' },
+          { name: 'reviewer.md', source: 'reviewer.md' },
+          { name: 'tester.md', source: 'tester.md' }
+        ]
+      },
       templates: {
         dir: path.join(opencodeDir, 'templates'),
         files: [
@@ -235,6 +245,22 @@ module.exports = {
         installed.push('commands/agent-team.md');
       } else {
         skipped.push('commands/agent-team.md (already exists)');
+      }
+
+      // 部署 Claude Code agent 定义
+      const agentDir = targets.agents.dir;
+      fs.mkdirSync(agentDir, { recursive: true });
+      for (const f of targets.agents.files) {
+        const dest = path.join(agentDir, f.name);
+        if (!fs.existsSync(dest)) {
+          fs.copyFileSync(
+            path.join(__dirname, '..', 'agents', f.source),
+            dest
+          );
+          installed.push(`agents/${f.name}`);
+        } else {
+          skipped.push(`agents/${f.name} (already exists)`);
+        }
       }
 
       // 部署模板
