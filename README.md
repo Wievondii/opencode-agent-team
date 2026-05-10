@@ -12,31 +12,23 @@
 
 ## 安装
 
-### 方式 1：npm 全局安装
+详细安装指南见 [INSTALL.md](./INSTALL.md)。
+
+### 快速开始（压缩包）
 
 ```bash
-npm install -g opencode-agent-team
+# 解压到任意目录，如 C:\opencode-agent-team
+# 编辑 ~/.config/opencode/opencode.json 加一行：
+"plugin": ["C:\\opencode-agent-team"]
+# 重启 OpenCode
 ```
 
-### 方式 2：本地开发安装
+### Git 安装
 
 ```bash
 git clone https://github.com/Wievondii/opencode-agent-team.git
-cd opencode-agent-team
-npm link
-```
-
-### 方式 3：直接在 opencode.json 中配置
-
-在 `~/.config/opencode/opencode.json` 的 `plugin` 数组中添加：
-
-```json
-{
-  "plugin": [
-    "opencode-browser-plugin",
-    "opencode-agent-team"
-  ]
-}
+# 编辑 ~/.config/opencode/opencode.json：
+"plugin": ["path/to/opencode-agent-team"]
 ```
 
 ## 使用
