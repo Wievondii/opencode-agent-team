@@ -1,0 +1,50 @@
+{
+  "version": "1.0.0",
+  "active_plan": null,
+  "current_round": 0,
+  "started_at": null,
+  "last_activity": null,
+  "status": "idle",
+  "agents": {
+    "planner": {
+      "status": "idle",
+      "session_id": null,
+      "started_at": null,
+      "completed_at": null,
+      "output": null
+    },
+    "developer": {
+      "status": "idle",
+      "session_id": null,
+      "started_at": null,
+      "completed_at": null,
+      "modules": [],
+      "files": []
+    },
+    "reviewer": {
+      "status": "idle",
+      "session_id": null,
+      "started_at": null,
+      "completed_at": null,
+      "reviewers": [],
+      "conclusion": null
+    },
+    "tester": {
+      "status": "idle",
+      "session_id": null,
+      "started_at": null,
+      "completed_at": null,
+      "task_id": null,
+      "result": null
+    }
+  },
+  "tasks": {
+    "total": 0,
+    "completed": 0,
+    "in_progress": 0,
+    "pending": 0
+  },
+  "task_ids": {},
+  "errors": [],
+  "learnings": []
+}

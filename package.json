@@ -1,0 +1,22 @@
+{
+  "name": "opencode-agent-team",
+  "version": "1.0.0",
+  "description": "OpenCode Agent Team plugin - 协调策划师/开发者/审查员/测试员四个子agent，通过Task + task_id实现持久化开发团队",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"No tests yet\""
+  },
+  "keywords": [
+    "opencode",
+    "agent",
+    "team",
+    "development",
+    "plugin"
+  ],
+  "author": "liunx",
+  "license": "MIT",
+  "dependencies": {},
+  "peerDependencies": {
+    "opencode": "*"
+  }
+}
