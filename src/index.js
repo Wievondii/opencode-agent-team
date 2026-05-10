@@ -191,9 +191,16 @@ module.exports = {
   install() {
     const home = process.env.USERPROFILE || process.env.HOME || '~';
     const opencodeDir = path.join(home, '.config', 'opencode');
+    const claudeDir = path.join(home, '.claude');
     
     // 目标路径
     const targets = {
+      commands: {
+        dir: path.join(claudeDir, 'commands'),
+        files: [
+          { name: 'agent-team.md', source: 'agent-team.md' }
+        ]
+      },
       templates: {
         dir: path.join(opencodeDir, 'templates'),
         files: [
@@ -216,6 +223,20 @@ module.exports = {
     const skipped = [];
 
     try {
+      // 部署 Claude Code command
+      const cmdDir = targets.commands.dir;
+      fs.mkdirSync(cmdDir, { recursive: true });
+      const cmdDest = path.join(cmdDir, 'agent-team.md');
+      if (!fs.existsSync(cmdDest)) {
+        fs.copyFileSync(
+          path.join(__dirname, '..', 'commands', 'agent-team.md'),
+          cmdDest
+        );
+        installed.push('commands/agent-team.md');
+      } else {
+        skipped.push('commands/agent-team.md (already exists)');
+      }
+
       // 部署模板
       const tplDir = targets.templates.dir;
       fs.mkdirSync(tplDir, { recursive: true });
