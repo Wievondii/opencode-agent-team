@@ -1,77 +1,81 @@
 # 安装指南
 
-## 压缩包安装（你已经有了）
+## 前置条件
 
-### 1. 解压到固定目录
+- Windows 10/11
+- PowerShell 5.1+
+- [OpenCode](https://opencode.ai) 已安装
 
-```
-推荐：C:\opencode-agent-team
-```
+## 安装步骤
 
-不要放在桌面或临时文件夹，放固定位置。
+### 1. 获取插件
 
-### 2. 配置 OpenCode
+**压缩包方式：**
+- 下载 zip 文件，解压到任意目录
 
-编辑 `C:\Users\你的用户名\.config\opencode\opencode.json`：
-
-找到 `plugin` 那行，加一条本地路径：
-
-```jsonc
-{
-  "plugin": [
-    "C:\\opencode-agent-team"
-  ]
-}
+**Git 方式：**
+```powershell
+git clone https://github.com/Wievondii/opencode-agent-team.git
 ```
 
-> 如果已经有 `"opencode-browser-plugin"`，保留它，逗号分隔加新的。
+### 2. 运行安装脚本
+
+打开 PowerShell，进入插件目录：
+
+```powershell
+cd D:\opencode-agent-team  # 或你解压的目录
+.\install.ps1
+```
+
+安装脚本会：
+- 复制 agent 文件到 `~/.config/opencode/agents/` 和 `~/.claude/agents/`
+- 复制插件代码到 `~/.config/opencode/plugins/agent-team/`
+- 复制配置文件到 `~/.config/opencode/agent-team/`
+- 更新 `opencode.json`（添加 plugin 引用和 agent 定义）
 
 ### 3. 重启 OpenCode
 
-完全关闭再打开。
+关闭并重新打开 OpenCode。
 
-### 4. 验证
+### 4. 使用
 
-按 `Tab` 键，agent 列表里出现 `pm` → 成功。
+按 `Tab` 键选择 `pm`（项目经理），然后描述你的需求。
 
----
+## 更改模型
 
-## 如果没有出现
+默认模型为 `xiaomi-token-plan-cn/mimo-v2.5-pro`。如需更改：
 
-手动复制文件（在压缩包解压目录执行）：
+1. 编辑 `~/.config/opencode/agent-team/team-config.json`：
 
-```powershell
-# PowerShell
-$src = "C:\opencode-agent-team"
-$claude = "$env:USERPROFILE\.claude"
-
-# 创建目录
-New-Item -ItemType Directory "$claude\agents" -Force | Out-Null
-New-Item -ItemType Directory "$claude\commands" -Force | Out-Null
-New-Item -ItemType Directory "$env:USERPROFILE\.config\opencode\templates" -Force | Out-Null
-New-Item -ItemType Directory "$env:USERPROFILE\.config\opencode\agent-team" -Force | Out-Null
-
-# 复制 agent
-Copy-Item "$src\agents\*.md" "$claude\agents\" -Force
-
-# 复制 command
-Copy-Item "$src\commands\*.md" "$claude\commands\" -Force
-
-# 复制模板
-Copy-Item "$src\templates\agent-team-log.md" "$env:USERPROFILE\.config\opencode\templates\comm-log.md" -Force
-
-# 复制 boulder
-Copy-Item "$src\agent-team\boulder.json" "$env:USERPROFILE\.config\opencode\agent-team\" -Force
-
-Write-Output "手动部署完成，重启 OpenCode"
+```json
+{
+  "models": {
+    "pm": "你的模型",
+    "planner": "你的模型",
+    "developer": "你的模型",
+    "reviewer": "你的模型",
+    "tester": "你的模型"
+  }
+}
 ```
 
-手动部署后不需要配 plugin，直接重启即可。
+2. 运行同步：
 
----
+```powershell
+powershell ~/.config/opencode/agent-team/sync-models.ps1
+```
 
-## 使用
+3. 重启 OpenCode
 
-**OpenCode：** Tab → 选 `pm` → 输入需求
+## 卸载
 
-**Claude Code：** 输入 `/agent-team 帮我做xxx`
+删除以下目录：
+
+```powershell
+Remove-Item ~/.config/opencode/plugins/agent-team -Recurse -Force
+Remove-Item ~/.config/opencode/agent-team -Recurse -Force
+Remove-Item ~/.config/opencode/templates/comm-log.md -Force
+# Agent 文件可保留，不影响其他功能
+```
+
+从 `~/.config/opencode/opencode.json` 的 `plugin` 数组中移除 `~/.config/opencode/plugins/agent-team`。
