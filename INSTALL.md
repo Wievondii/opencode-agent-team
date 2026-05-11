@@ -2,80 +2,77 @@
 
 ## 前置条件
 
-- Windows 10/11
-- PowerShell 5.1+
 - [OpenCode](https://opencode.ai) 已安装
+- Git 已安装
 
 ## 安装步骤
 
-### 1. 获取插件
+### 1. 克隆仓库
 
-**压缩包方式：**
-- 下载 zip 文件，解压到任意目录
-
-**Git 方式：**
-```powershell
-git clone https://github.com/Wievondii/opencode-agent-team.git
+```bash
+git clone https://github.com/Wievondii/opencode-agent-team.git /tmp/opencode-agent-team
 ```
 
-### 2. 运行安装脚本
+### 2. 复制文件
 
-打开 PowerShell，进入插件目录：
+```bash
+# Agent 文件（自动加载）
+cp /tmp/opencode-agent-team/agents/*.md ~/.config/opencode/agents/
+cp /tmp/opencode-agent-team/agents/*.md ~/.claude/agents/
 
-```powershell
-cd D:\opencode-agent-team  # 或你解压的目录
-.\install.ps1
+# 模板文件
+cp /tmp/opencode-agent-team/templates/*.md ~/.config/opencode/templates/
+
+# 命令文件（Claude Code）
+cp /tmp/opencode-agent-team/commands/*.md ~/.claude/commands/
+
+# 配置文件
+mkdir -p ~/.config/opencode/agent-team
+cp /tmp/opencode-agent-team/agent-team/boulder.json ~/.config/opencode/agent-team/
+cp /tmp/opencode-agent-team/team-config.json ~/.config/opencode/agent-team/
 ```
 
-安装脚本会：
-- 复制 agent 文件到 `~/.config/opencode/agents/` 和 `~/.claude/agents/`
-- 复制插件代码到 `~/.config/opencode/plugins/agent-team/`
-- 复制配置文件到 `~/.config/opencode/agent-team/`
-- 更新 `opencode.json`（添加 plugin 引用和 agent 定义）
+### 3. 配置 opencode.json
 
-### 3. 重启 OpenCode
-
-关闭并重新打开 OpenCode。
-
-### 4. 使用
-
-按 `Tab` 键选择 `pm`（项目经理），然后描述你的需求。
-
-## 更改模型
-
-默认模型为 `xiaomi-token-plan-cn/mimo-v2.5-pro`。如需更改：
-
-1. 编辑 `~/.config/opencode/agent-team/team-config.json`：
+如果 `~/.config/opencode/opencode.json` 不存在，创建最小配置：
 
 ```json
 {
-  "models": {
-    "pm": "你的模型",
-    "planner": "你的模型",
-    "developer": "你的模型",
-    "reviewer": "你的模型",
-    "tester": "你的模型"
-  }
+  "$schema": "https://opencode.ai/config.json",
+  "permission": { "bash": { "git*": "allow" } },
+  "shell": "powershell"
 }
 ```
 
-2. 运行同步：
+### 4. 清理
 
-```powershell
-powershell ~/.config/opencode/agent-team/sync-models.ps1
+```bash
+rm -rf /tmp/opencode-agent-team
 ```
 
-3. 重启 OpenCode
+### 5. 使用
+
+重启 OpenCode，按 `Tab` 选择 `pm`。
+
+## 更改模型
+
+编辑 `~/.config/opencode/agents/` 下对应 agent 的 .md 文件，修改 frontmatter 中的 `model` 字段。
 
 ## 卸载
 
-删除以下目录：
-
-```powershell
-Remove-Item ~/.config/opencode/plugins/agent-team -Recurse -Force
-Remove-Item ~/.config/opencode/agent-team -Recurse -Force
-Remove-Item ~/.config/opencode/templates/comm-log.md -Force
-# Agent 文件可保留，不影响其他功能
+```bash
+rm ~/.config/opencode/agents/pm.md
+rm ~/.config/opencode/agents/planner.md
+rm ~/.config/opencode/agents/developer.md
+rm ~/.config/opencode/agents/reviewer.md
+rm ~/.config/opencode/agents/tester.md
+rm ~/.config/opencode/templates/agent-team-log.md
+rm ~/.config/opencode/templates/dev-workspace.md
+rm -rf ~/.config/opencode/agent-team
+rm ~/.claude/agents/pm.md
+rm ~/.claude/agents/planner.md
+rm ~/.claude/agents/developer.md
+rm ~/.claude/agents/reviewer.md
+rm ~/.claude/agents/tester.md
+rm ~/.claude/commands/agent-team.md
 ```
-
-从 `~/.config/opencode/opencode.json` 的 `plugin` 数组中移除 `~/.config/opencode/plugins/agent-team`。
