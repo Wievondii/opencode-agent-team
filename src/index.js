@@ -174,6 +174,6 @@ export const AgentTeamPlugin = async ({ project, client, $, directory, worktree 
 // 元数据导出
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-export const name = 'opencode-agent-team';
+export const name = '@liunx/agent-team';
 export const version = PACKAGE_VERSION;
 export const description = 'OpenCode Agent Team - 协调策划师/开发者/审查员/测试员四个子agent';
