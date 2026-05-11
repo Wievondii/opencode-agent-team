@@ -3,28 +3,28 @@
   "agent": {
     "pm": {
       "mode": "primary",
-      "model": "xiaomi-token-plan-sgp/mimo-v2.5-pro",
+      "model": "xiaomi-token-plan-cn/mimo-v2.5-pro",
       "temperature": 0.2,
       "color": "#4F46E5"
     },
     "planner": {
       "mode": "subagent",
-      "model": "xiaomi-token-plan-sgp/mimo-v2.5-pro",
+      "model": "xiaomi-token-plan-cn/mimo-v2.5-pro",
       "temperature": 0.2
     },
     "developer": {
       "mode": "subagent",
-      "model": "xiaomi-token-plan-sgp/mimo-v2.5-pro",
+      "model": "xiaomi-token-plan-cn/mimo-v2.5-pro",
       "temperature": 0.3
     },
     "reviewer": {
       "mode": "subagent",
-      "model": "xiaomi-token-plan-sgp/mimo-v2.5-pro",
+      "model": "xiaomi-token-plan-cn/mimo-v2.5-pro",
       "temperature": 0.2
     },
     "tester": {
       "mode": "subagent",
-      "model": "xiaomi-token-plan-sgp/mimo-v2.5",
+      "model": "xiaomi-token-plan-cn/mimo-v2.5",
       "temperature": 0.2
     }
   }
