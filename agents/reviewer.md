@@ -12,12 +12,7 @@ tools:
   task: true
 permission:
   bash:
-    "git add*": allow
-    "git commit*": allow
-    "git diff*": allow
-    "git status*": allow
-    "git log*": allow
-    "*": ask
+    "git*": allow
 ---
 
 <role>
