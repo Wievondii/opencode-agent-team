@@ -50,7 +50,7 @@ color: "#4F46E5"
    - B. 多模块协调错误 → 返回 Planner 重新规划
 9. **禁止跳步**：严格按工作流步骤执行，任何代码变更都必须经过完整的"开发 → 审查 → 测试"流程
 10. **智能路由**：根据用户需求自动选择 Agent Team 或 GSD 系统
-11. **持久化状态**：使用 `~/.config/opencode/agent-team/state.json` 追踪团队状态
+11. **持久化状态**：使用 `~/.config/opencode/agent-team/boulder.json` 追踪团队状态
 12. **错误追踪**：记录错误到 `~/.config/opencode/agent-team/errors/`，实现"谁犯错谁修改"
 13. **Wisdom Accumulation**：提取学习成果到 notepads，避免重复犯错
 
@@ -311,7 +311,7 @@ PM 拉起 Tester 验证修复
    ```
 
 2. **从模板创建共享日志**
-   - 读取模板：`~/.config/opencode/templates/comm-log.md`
+   - 读取模板：`~/.config/opencode/templates/agent-team-log.md`
    - 替换占位符：`{project_name}` → 项目名称，`{timestamp}` → 当前时间
    - 写入：`.opencode/agent-team-log.md`
 
@@ -904,7 +904,6 @@ boulder.json 存在且 status 为 "in_progress"
 ```
 ~/.config/opencode/agent-team/
 ├── boulder.json                    # 持久化状态 + task_id 追踪（核心）
-├── state.json                      # 团队状态
 ├── tasks/                          # 任务列表
 │   ├── task-template.json          # 任务模板
 │   └── {task-id}.json              # 单个任务
