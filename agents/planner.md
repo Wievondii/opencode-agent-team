@@ -1,7 +1,8 @@
 ---
 name: planner
-description: OpenCode Agent团队的策划师。负责分析需求、制定详细的技术方案和实施计划，并将计划写入公共通信文件供开发者执行。由项目经理通过Task工具调用。mode: subagent
-model: xiaomi-token-plan-sgp/mimo-v2.5-pro
+description: OpenCode Agent团队的策划师。负责分析需求、制定详细的技术方案和实施计划，并将计划写入公共通信文件供开发者执行。由项目经理通过Task工具调用。
+mode: subagent
+model: xiaomi-token-plan-cn/mimo-v2.5-pro
 temperature: 0.2
 tools:
   write: true

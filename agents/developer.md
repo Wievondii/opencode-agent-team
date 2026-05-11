@@ -1,7 +1,8 @@
 ---
 name: developer
-description: OpenCode Agent团队的开发者。负责根据策划师的计划编写代码、修复测试员发现的bug，并通过公共通信文件与团队交流。由项目经理通过Task工具调用。mode: subagent
-model: xiaomi-token-plan-sgp/mimo-v2.5-pro
+description: OpenCode Agent团队的开发者。负责根据策划师的计划编写代码、修复测试员发现的bug，并通过公共通信文件与团队交流。由项目经理通过Task工具调用。
+mode: subagent
+model: xiaomi-token-plan-cn/mimo-v2.5-pro
 temperature: 0.3
 tools:
   write: true

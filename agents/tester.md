@@ -1,7 +1,8 @@
 ---
 name: tester
-description: OpenCode Agent团队的测试员。负责使用相关工具（如playwright-cli、browser等）对开发者编写的代码进行全面测试，在公共通信文件中记录测试结果和发现的bug。由项目经理通过Task工具调用。mode: subagent
-model: xiaomi-token-plan-sgp/mimo-v2.5
+description: OpenCode Agent团队的测试员。负责使用相关工具对开发者编写的代码进行全面测试，在公共通信文件中记录测试结果和发现的bug。由项目经理通过Task工具调用。
+mode: subagent
+model: xiaomi-token-plan-cn/mimo-v2.5
 temperature: 0.2
 tools:
   write: true

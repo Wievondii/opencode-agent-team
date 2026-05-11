@@ -1,7 +1,8 @@
 ---
 name: reviewer
-description: OpenCode Agent团队的代码审查员。负责审查开发者编写的代码，检查代码质量、架构设计、安全性和最佳实践，确保代码符合项目规范。审查通过后执行 git add + commit 提交代码。由项目经理在开发完成后、测试前通过Task工具调用。mode: subagent
-model: xiaomi-token-plan-sgp/mimo-v2.5-pro
+description: OpenCode Agent团队的代码审查员。负责审查开发者编写的代码，检查代码质量、架构设计、安全性和最佳实践，确保代码符合项目规范。审查通过后执行 git add + commit 提交代码。由项目经理通过Task工具调用。
+mode: subagent
+model: xiaomi-token-plan-cn/mimo-v2.5-pro
 temperature: 0.2
 tools:
   write: true

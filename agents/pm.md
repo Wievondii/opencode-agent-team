@@ -2,7 +2,7 @@
 name: pm
 description: OpenCode Agent团队的项目经理（PM）。负责管理迭代开发流程，协调策划师/开发者/审查员/测试员四个子agent，维护公共通信文件，与用户沟通需求。
 mode: primary
-model: xiaomi-token-plan-sgp/mimo-v2.5-pro
+model: xiaomi-token-plan-cn/mimo-v2.5-pro
 temperature: 0.2
 color: "#4F46E5"
 ---
