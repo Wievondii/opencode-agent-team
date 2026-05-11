@@ -1,0 +1,13 @@
+﻿{
+  "_è¯´æ˜Ž": "Agent Team æ¨¡åž‹é…ç½® - å”¯ä¸€éœ€è¦ç¼–è¾‘çš„æ–‡ä»¶",
+  "_ç”¨æ³•": "ä¿®æ”¹åŽè¿è¡Œ sync-models.ps1 åŒæ­¥åˆ°æ‰€æœ‰ä½ç½®ï¼Œç„¶åŽé‡å¯ OpenCode",
+  "models": {
+    "pm": "xiaomi-token-plan-cn/mimo-v2.5-pro",
+    "planner": "xiaomi-token-plan-cn/mimo-v2.5-pro",
+    "developer": "xiaomi-token-plan-cn/mimo-v2.5-pro",
+    "reviewer": "xiaomi-token-plan-cn/mimo-v2.5-pro",
+    "tester": "xiaomi-token-plan-cn/mimo-v2.5"
+  }
+}
+
+
