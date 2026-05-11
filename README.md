@@ -11,67 +11,49 @@
 
 ## 安装
 
-### 方式一：让 AI Agent 自动安装（推荐）
+### 方式一：npm 包（推荐）
+
+在 `~/.config/opencode/opencode.json` 中添加插件：
+
+```json
+{
+  "plugin": ["opencode-agent-team"]
+}
+```
+
+重启 OpenCode，插件会自动：
+1. 安装 npm 包
+2. 复制 agent 文件到 `~/.config/opencode/agents/`
+3. 复制模板文件到 `~/.config/opencode/templates/`
+4. 创建 `~/.config/opencode/agent-team/` 配置目录
+
+### 方式二：让 AI Agent 安装
 
 把以下内容发给你的 AI agent：
 
 ```
 请帮我安装 opencode-agent-team 插件。
 
-执行以下步骤：
+在 ~/.config/opencode/opencode.json 的 plugin 数组中添加 "opencode-agent-team"，然后重启 OpenCode。
 
-1. 克隆仓库：
-   git clone https://github.com/Wievondii/opencode-agent-team.git /tmp/opencode-agent-team
-
-2. 创建目录：
-   mkdir -p ~/.config/opencode/agents
-   mkdir -p ~/.config/opencode/templates
-   mkdir -p ~/.config/opencode/agent-team
-   mkdir -p ~/.claude/agents
-   mkdir -p ~/.claude/commands
-
-3. 复制 agent 文件：
-   cp /tmp/opencode-agent-team/agents/*.md ~/.config/opencode/agents/
-   cp /tmp/opencode-agent-team/agents/*.md ~/.claude/agents/
-
-4. 复制模板文件：
-   cp /tmp/opencode-agent-team/templates/*.md ~/.config/opencode/templates/
-
-5. 复制命令文件：
-   cp /tmp/opencode-agent-team/commands/*.md ~/.claude/commands/
-
-6. 复制配置文件：
-   cp /tmp/opencode-agent-team/agent-team/boulder.json ~/.config/opencode/agent-team/
-   cp /tmp/opencode-agent-team/team-config.json ~/.config/opencode/agent-team/
-
-7. 如果 ~/.config/opencode/opencode.json 不存在，创建一个最小配置：
-   {
-     "$schema": "https://opencode.ai/config.json",
-     "permission": { "bash": { "git*": "allow" } },
-     "shell": "powershell"
-   }
-
-8. 清理临时文件：
-   rm -rf /tmp/opencode-agent-team
-
-9. 提示用户重启 OpenCode，然后按 Tab 选择 pm
+如果 opencode.json 不存在，创建：
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": ["opencode-agent-team"],
+  "permission": { "bash": { "git*": "allow" } }
+}
 ```
 
-### 方式二：手动安装
+### 方式三：手动安装
 
 ```bash
 git clone https://github.com/Wievondii/opencode-agent-team.git /tmp/opencode-agent-team
 cp /tmp/opencode-agent-team/agents/*.md ~/.config/opencode/agents/
-cp /tmp/opencode-agent-team/agents/*.md ~/.claude/agents/
 cp /tmp/opencode-agent-team/templates/*.md ~/.config/opencode/templates/
-cp /tmp/opencode-agent-team/commands/*.md ~/.claude/commands/
 mkdir -p ~/.config/opencode/agent-team
 cp /tmp/opencode-agent-team/agent-team/boulder.json ~/.config/opencode/agent-team/
-cp /tmp/opencode-agent-team/team-config.json ~/.config/opencode/agent-team/
 rm -rf /tmp/opencode-agent-team
 ```
-
-然后重启 OpenCode，按 Tab 选择 `pm`。
 
 ## 使用
 
@@ -104,10 +86,16 @@ PM (项目经理)
 ```
 ~/.config/opencode/
 ├── agents/                         # Agent 提示词（自动加载）
+│   ├── pm.md
+│   ├── planner.md
+│   ├── developer.md
+│   ├── reviewer.md
+│   └── tester.md
 ├── agent-team/
-│   ├── boulder.json                # 持久化状态
-│   └── team-config.json            # 模型配置
+│   └── boulder.json                # 持久化状态
 └── templates/                      # 日志模板
+    ├── agent-team-log.md
+    └── dev-workspace.md
 ```
 
 **项目目录（PM 运行时创建）：**
@@ -120,19 +108,19 @@ PM (项目经理)
     └── notepads/                   # 学习成果
 ```
 
-## 更改模型
+## 更新插件
 
-编辑 agent .md 文件的 frontmatter 中的 `model` 字段：
+删除 `~/.config/opencode/agents/pm.md` 等文件，重启 OpenCode → 插件检测到文件不存在 → 自动复制新版本。
 
-```yaml
----
-name: developer
-model: your-provider/your-model    # 改这里
-temperature: 0.3
----
+或者删除版本文件强制更新：
+
+```bash
+rm ~/.config/opencode/agent-team/.opencode-agent-team-version
 ```
 
-所有 agent 文件位于 `~/.config/opencode/agents/`。
+## 更改模型
+
+编辑 `~/.config/opencode/agents/` 下对应 agent 的 .md 文件，修改 frontmatter 中的 `model` 字段。
 
 ## 许可证
 
