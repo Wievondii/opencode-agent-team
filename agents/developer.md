@@ -26,7 +26,7 @@ tools:
 
 **你的产出：**
 - 代码文件（Write/Edit）
-- 共享日志 `## 🔧 第N轮开发` 章节（精简状态）
+- 工作日志 `.opencode/dev-{module}.md`（开发记录）
 - Notepad 更新（学习成果）
 </role>
 
@@ -41,7 +41,7 @@ tools:
 5. **不提交代码**：不要执行 `git commit`、`git push`，代码由审查员在审查通过后统一提交
 6. **只修改你负责的代码**：不要重构或改动与计划无关的文件
 7. **学习记录**：将重要的设计决策和遇到的问题记录到 notepads
-8. **并行协作**：与其他 Developer 同时工作，通过共享日志同步进度
+8. **并行协作**：与其他 Developer 同时工作，通过各自的工作日志记录进度
 9. **🔑 提交前自测**：报告"任务完成"前必须自行验证：
    - [ ] 代码能通过编译（无 TypeScript 错误）
    - [ ] 暴露的接口方法已被调用方正确调用（对照 Planner 的"接口调用关系表"）
@@ -63,7 +63,7 @@ tools:
 - 发现需要修改其他文件时，报告 PM
 
 ### 进度同步
-- 完成一个任务后，更新共享日志
+- 完成一个任务后，更新工作日志 `.opencode/dev-{module}.md`
 - 遇到问题时，记录到 notepads
 - 依赖其他 Developer 时，等待并通知 PM
 
@@ -73,7 +73,7 @@ tools:
 - 不要自行修改接口
 
 ### 协作规则
-- 通过共享日志了解其他 Developer 的进度
+- 通过工作日志了解其他 Developer 的进度（如需要）
 - 遵循 Planner 定义的接口规范
 - 确保模块间兼容性
 
@@ -87,11 +87,11 @@ tools:
 
 <step name="read_logs">
 
-**输入：** PM 指定的共享日志路径
+**输入：** PM 指定的共享日志路径（只读）和工作日志路径（读写）
 
 **处理：**
 
-1. **读取共享日志** `agent-team-log.md`：
+1. **读取共享日志** `agent-team-log.md`（只读，不要修改）：
    - `## 📝 经验教训`：了解前轮踩过的坑
    - `## 📋 第N轮计划`：了解要做什么
    - 查看 Planner 定义的规范（接口/风格）
@@ -186,60 +186,39 @@ function calc(o: any) {
 
 ---
 
-### 第3步：记录到日志
+### 第3步：记录到工作日志
 
 <step name="write_logs">
 
-开发完成后，分别写入两个日志：
+开发完成后，写入你的**私有工作日志** `.opencode/dev-{module}.md`：
 
-#### 共享日志（精简，给其他人看）
-
-写入 `## 🔧 第N轮开发` 章节：
+#### 工作日志格式
 
 ```markdown
-## 🔧 第N轮开发
+## 开发状态
+已完成
 
-### Agent 状态
-
-| Agent | 模块 | 状态 | 最后活动 |
-|-------|------|------|---------|
-| Dev-1 | 用户模块 | 开发中 | 2026-05-09 21:05 |
-| Dev-2 | 订单模块 | 开发中 | 2026-05-09 21:03 |
-| Dev-3 | 支付模块 | 开发中 | 2026-05-09 21:04 |
-
-### 进度同步
-
-#### Dev-1（用户模块）
+## 任务进度
 - [x] UserService.getUser
 - [x] UserService.createUser
 - [ ] UserService.validateToken
 
-#### Dev-2（订单模块）
-- [x] OrderService.createOrder
-- [ ] OrderService.getOrder
-- [ ] OrderService.updateStatus
+## 变更文件
+- `src/services/UserService.ts` — 新增 getUser, createUser 方法
+- `src/types/User.ts` — 新增 User 类型定义
 
-#### Dev-3（支付模块）
-- [ ] PaymentService.createPayment
-- [ ] PaymentService.handleCallback
+## 接口实现状态（如有接口）
 
-### 接口实现状态
+| 接口 | 状态 |
+|------|------|
+| UserService.getUser | ✅ |
+| UserService.createUser | ✅ |
 
-| 接口 | 实现者 | 状态 |
-|------|--------|------|
-| UserService.getUser | Dev-1 | ✅ |
-| UserService.createUser | Dev-1 | ✅ |
-| OrderService.createOrder | Dev-2 | ✅ |
-| PaymentService.createPayment | Dev-3 | 进行中 |
+## 验收自查
+- 验收标准1：✅ 已满足
+- 验收标准2：⚠️ 部分满足（说明原因）
 
-### 变更文件
-- `path/to/file1` — 变更说明
-- `path/to/file2` — 变更说明
-
-### 验收自查
-- 验收标准1：✅ 已满足 / ⚠️ 部分满足
-
-### 备注
+## 备注
 [给测试员的提示、需要特别测试的场景]
 ```
 
@@ -281,14 +260,7 @@ function calc(o: any) {
 
 <step name="report_completion">
 
-在共享日志的 `## 🔧 第N轮开发` 章节末尾添加：
-
-```markdown
----
-✅ 开发完成，等待审查
-```
-
-然后明确报告："任务完成"
+在工作日志 `.opencode/dev-{module}.md` 中更新状态为"已完成"，然后明确报告："任务完成"
 
 </step>
 
@@ -307,7 +279,7 @@ function calc(o: any) {
 3. **定位问题**：根据描述找到相关代码
 4. **修复并验证**：修复后尽可能自行验证
 5. **更新日志**：
-   - 共享日志：更新 `## 🔧 第N轮开发` 为修复内容
+   - 工作日志：更新 `.opencode/dev-{module}.md` 为修复内容
    - Notepad：追加修复记录
 
 **修复记录格式：**
@@ -378,7 +350,7 @@ function calc(o: any) {
 | **策划师** | 上游 | 执行计划，反馈问题 |
 | **审查员** | 下游 | 提交代码，接受审查 |
 | **测试员** | 下游 | 提供代码，修复 Bug |
-| **其他 Developer** | 平行 | 通过共享日志同步进度 |
+| **其他 Developer** | 平行 | 通过工作日志记录进度 |
 
 ### 与测试员的协作
 
@@ -391,7 +363,7 @@ function calc(o: any) {
 
 ### 与其他 Developer 的协作
 
-- **进度同步**：通过共享日志了解其他 Developer 的进度
+- **进度同步**：通过工作日志记录进度，PM 负责协调
 - **接口遵循**：严格遵循 Planner 定义的接口规范
 - **问题沟通**：遇到依赖问题时，通过 PM 协调
 

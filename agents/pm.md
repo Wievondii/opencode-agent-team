@@ -354,7 +354,7 @@ PM 拉起 Tester 验证修复
 5. **创建新 Agent**
 
 6. **追加新轮次章节**
-   - 在共享日志末尾追加：`## 📋 第N轮计划`、`## 🔧 第N轮开发`、`## 🔍 第N轮审查`、`## 🧪 第N轮测试`
+   - 在共享日志末尾追加：`## 📋 第N轮计划`、`## 🔍 第N轮审查`、`## 🧪 第N轮测试`
 
 7. **更新轮次信息**
    - 更新日志头部 `当前轮次：第 N 轮`
@@ -437,33 +437,35 @@ boulder.task_ids["planner"] = result.task_id
 
 <step name="development">
 
-**读取计划，创建多个 Developer：**
+**读取计划，创建 Developer 私有日志，然后启动 Developer：**
 
 ```
-# 读取计划中的模块划分
-plan = readPlan()
+# 1. 根据 Planner 的模块划分，创建 dev 私有日志
+for module in plan.modules:
+  从模板 ~/.config/opencode/templates/dev-workspace.md 创建
+  .opencode/dev-{module.name}.md
+  替换占位符：{module_name} → 模块名，{file_scope} → 文件范围
 
-# 为每个模块创建 Developer，记录 task_id
+# 2. 为每个模块创建 Developer，记录 task_id
 for module in plan.modules:
   result = Task(
     description: "Developer for {module.name}",
     prompt: |
-      共享日志：.opencode/agent-team-log.md
+      共享日志（只读）：.opencode/agent-team-log.md
+      你的工作日志：.opencode/dev-{module.name}.md
       你的模块：{module.name}
       你的文件范围：{module.files}
       依赖规范：{module.spec}
       请先读取共享日志了解计划和规范
       按计划实现你的模块
-      
+
       ⚠️ 写入规则（防止并行冲突）：
-      只写入共享日志中的 "### Dev: {module.name}" 子区域，不要修改其他 Developer 的区域。
-      更新后在此子区域下追加你的完成状态和变更文件清单。
-      
-      完成后明确报告"任务完成"
-    subagent_type: "developer",
-    load_skills: []
+      1. 共享日志只读，不要修改
+      2. 所有开发记录写入你的工作日志 .opencode/dev-{module.name}.md
+      3. 完成后明确报告"任务完成"和变更文件清单
+    subagent_type: "developer"
   )
-  
+
   # 🔑 记录 task_id
   boulder.task_ids["developer_{module.name}"] = result.task_id
 ```
@@ -493,7 +495,7 @@ for module in plan.modules:
 **验证检查点：**
 - [ ] 所有 Developer 已创建
 - [ ] 每个 Developer 明确了自己的模块和文件范围
-- [ ] 共享日志中 `## 🔧 第N轮开发` 章节已更新
+- [ ] 每个 Developer 的 `.opencode/dev-{module}.md` 已创建
 - [ ] 所有 Developer 报告"任务完成"
 - [ ] boulder.json 已更新
 
@@ -515,18 +517,19 @@ for module in plan.modules:
      task_id: boulder.task_ids["developer_{集成负责人模块}"],
      prompt: |
        共享日志：.opencode/agent-team-log.md
-       
+       开发日志：.opencode/dev-*.md
+
         请检查所有模块的集成链路：
-        1. 对照 Planner 的"接口调用关系表"，逐一验证每个接口是否被正确调用
-        2. 检查是否有死代码（定义了但从未被调用的类/方法/接口）
-        3. 检查数据传递链路是否完整（类型一致、参数正确）
-        4. 🔑 状态机回调验证：初始状态是否触发了 onEnter？（同名状态不跳过）
-        5. 🔑 UI 初始化链路验证：状态机 → UIManager → showMenu/showGame/showGameOver 是否连通
-        6. 初始化死锁检查：无 A 等 B 初始化、B 等 A 初始化的循环等待
-        7. 将检查结果写入共享日志 "## 🔗 第N轮集成检查" 章节
-        8. 如发现断裂，直接修复（跳过审查）然后报告"集成修复完成"
-        9. 所有链路完整后报告"集成检查通过"
-     load_skills: []
+        1. 读取所有 dev-*.md 了解各模块的变更内容
+        2. 对照 Planner 的"接口调用关系表"，逐一验证每个接口是否被正确调用
+        3. 检查是否有死代码（定义了但从未被调用的类/方法/接口）
+        4. 检查数据传递链路是否完整（类型一致、参数正确）
+        5. 🔑 状态机回调验证：初始状态是否触发了 onEnter？（同名状态不跳过）
+        6. 🔑 UI 初始化链路验证：状态机 → UIManager → showMenu/showGame/showGameOver 是否连通
+        7. 初始化死锁检查：无 A 等 B 初始化、B 等 A 初始化的循环等待
+        8. 将检查结果写入工作日志 .opencode/dev-{集成负责人模块}.md
+        9. 如发现断裂，直接修复（跳过审查）然后报告"集成修复完成"
+        10. 所有链路完整后报告"集成检查通过"
    )
    ```
 
@@ -549,24 +552,22 @@ for module in plan.modules:
 **读取计划中的审查策略：**
 
 ```
-# 读取计划中的审查策略
-plan = readPlan()
-
 # 🔑 始终串行审查（防止 git commit 冲突）
 # 不论任务大小，始终用 1 个 Reviewer 串行审查所有模块
 Task(
   description: "Reviewer for all modules",
   prompt: |
     共享日志：.opencode/agent-team-log.md
+    开发日志目录：.opencode/dev-*.md
     审查范围：所有模块
-    请先读取共享日志了解计划和开发状态
+
+    请先读取共享日志了解计划和规范
+    然后读取每个 dev-*.md 了解开发者的变更内容
     审查所有模块的代码
     重点关注模块间交互
-    
-    ⚠️ 写入规则（防止并行冲突）：
-    每个模块的审查结果写入 "### Review: {module.name}" 子区域
-    
+
     如果审查通过，执行 git add + git commit
+    审查结果写入共享日志 "## 🔍 第N轮审查" 章节
     完成后明确报告审查结论
   subagent_type: "reviewer"
 )
@@ -620,8 +621,11 @@ for module in plan.modules:
     description: "Tester for {module.name}",
     prompt: |
       共享日志：.opencode/agent-team-log.md
+      开发日志：.opencode/dev-{module.name}.md
       测试范围：{module.name}
-      请先读取共享日志了解计划、开发状态和审查结果
+
+      请先读取共享日志了解计划和审查结果
+      然后读取 dev-{module.name}.md 了解开发者的变更内容
       测试 {module.name} 的功能
       重点关注模块间交互
       错误分类：
@@ -694,7 +698,7 @@ for module in plan.modules:
 **修复循环（在当前轮内执行）：**
 
 ```
-🔑 用 task_id 恢复 Developer 会话修复 → 更新 🔧 章节
+🔑 用 task_id 恢复 Developer 会话修复 → 更新 dev-{module}.md
     Task(task_id=boulder.task_ids["developer_{module}"],
          prompt="修复 Bug #X: {详情}",
          load_skills=[])
@@ -812,7 +816,7 @@ PM 在执行以下操作前，必须确认前置步骤已完成：
 |------|------------|---------|
 | 拉起策划师 | 用户需求已确认 | 需求描述清晰 |
 | 拉起 Developer | 策划师已回报"计划完成" | 共享日志 📋 章节已写入，包含模块划分 |
-| 拉起 Reviewer | 所有 Developer 已回报"任务完成" | 共享日志 🔧 章节已写入 |
+| 拉起 Reviewer | 所有 Developer 已回报"任务完成" | 所有 dev-*.md 已创建并写入 |
 | 拉起 Tester | Reviewer 已回报"✅通过"或"⚠️有条件通过"且已提交代码 | 共享日志 🔍 章节已写入，git log 有新提交 |
 | 汇报用户 | 所有 Tester 已回报"测试完成" | 共享日志 🧪 章节已写入 |
 | 进入下一轮 | 用户已确认本轮结果 | 用户明确确认 |
@@ -947,11 +951,6 @@ boulder.json 存在且 status 为 "in_progress"
 
 ## 📋 第N轮计划
 <!-- 策划师写入 -->
-
----
-
-## 🔧 第N轮开发
-<!-- 开发者写入 -->
 
 ---
 
