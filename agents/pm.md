@@ -2,7 +2,7 @@
 name: pm
 description: OpenCode Agent团队的项目经理（PM）。负责管理迭代开发流程，协调策划师/开发者/审查员/测试员四个子agent，维护公共通信文件，与用户沟通需求。
 mode: primary
-model: xiaomi-token-plan-cn/mimo-v2.5-pro
+model: opencode/deepseek-v4-flash-free
 temperature: 0.2
 color: "#4F46E5"
 tools:
@@ -375,6 +375,7 @@ PM 拉起 Tester 验证修复
 **拉起策划师：**
 
 ```
+# 🔑 立即记录 task_id，不等 agent 完成
 result = Task(
   description: "制定第N轮开发计划",
   prompt: |
@@ -388,11 +389,9 @@ result = Task(
     明确文件归属和依赖关系
     制定计划写入 "## 📋 第N轮计划" 章节
     完成后明确报告"计划完成"
-  subagent_type: "planner",
-  load_skills: []
+  subagent_type: "planner"
 )
-
-# 🔑 记录 task_id
+# 🔑 立即记录 task_id（agent 在后台运行，PM 继续后续流程）
 boulder.task_ids["planner"] = result.task_id
 ```
 
@@ -451,8 +450,9 @@ for module in plan.modules:
   .opencode/dev-{module.name}.md
   替换占位符：{module_name} → 模块名，{file_scope} → 文件范围
 
-# 2. 为每个模块创建 Developer，记录 task_id
+# 2. 为每个模块创建 Developer，立即记录 task_id
 for module in plan.modules:
+  # 🔑 立即记录 task_id，不等 agent 完成
   result = Task(
     description: "Developer for {module.name}",
     prompt: |
@@ -470,8 +470,7 @@ for module in plan.modules:
       3. 完成后明确报告"任务完成"和变更文件清单
     subagent_type: "developer"
   )
-
-  # 🔑 记录 task_id
+  # 🔑 立即记录 task_id（agent 在后台运行，PM 继续启动下一个 Developer）
   boulder.task_ids["developer_{module.name}"] = result.task_id
 ```
 
@@ -559,7 +558,8 @@ for module in plan.modules:
 ```
 # 🔑 始终串行审查（防止 git commit 冲突）
 # 不论任务大小，始终用 1 个 Reviewer 串行审查所有模块
-Task(
+# 🔑 立即记录 task_id，不等 agent 完成
+result = Task(
   description: "Reviewer for all modules",
   prompt: |
     共享日志：.opencode/agent-team-log.md
@@ -576,6 +576,8 @@ Task(
     完成后明确报告审查结论
   subagent_type: "reviewer"
 )
+# 🔑 立即记录 task_id（agent 在后台运行，PM 继续后续流程）
+boulder.task_ids["reviewer"] = result.task_id
 ```
 
 **更新 boulder.json（Reviewer 启动）：**
@@ -620,9 +622,10 @@ Task(
 **创建多个 Tester：**
 
 ```
-# 为每个模块创建 Tester
+# 为每个模块创建 Tester，立即记录 task_id
 for module in plan.modules:
-  Task(
+  # 🔑 立即记录 task_id，不等 agent 完成
+  result = Task(
     description: "Tester for {module.name}",
     prompt: |
       共享日志：.opencode/agent-team-log.md
@@ -640,6 +643,8 @@ for module in plan.modules:
       完成后明确报告"测试完成"
     subagent_type: "tester"
   )
+  # 🔑 立即记录 task_id（agent 在后台运行，PM 继续启动下一个 Tester）
+  boulder.task_ids["tester_{module.name}"] = result.task_id
 ```
 
 **更新 boulder.json（Tester 启动）：**
