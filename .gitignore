@@ -1,6 +1,17 @@
-node_modules/
-*.log
+# OS / editors
 .DS_Store
-.opencode/
+Thumbs.db
+*.bak
+*.swp
+.$*
+
+# Build / runtime
+node_modules/
 dist/
+*.log
+
+# OpenCode runtime artifacts produced when this plugin runs in another project
+.opencode/
+
+# Stray IDE folders
 .claude/
