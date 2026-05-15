@@ -1,58 +1,154 @@
-# 安装指南
+# Installation Guide
 
-## 前置条件
+> 🇨🇳 中文版与英文版安装步骤一致，下面用中英对照写一遍并附**故障排查**。
 
-- [OpenCode](https://opencode.ai) 已安装
+## Prerequisites · 前置条件
 
-## 安装步骤
+- [OpenCode](https://opencode.ai) installed and runnable from terminal.
+- `git` available on `PATH` (the installer uses it for the remote-install path).
+- Linux / macOS / WSL → `bash`. Windows → PowerShell 5+.
 
-### npm 包安装（推荐）
+> ❌ **No npm required.** This project is not distributed via npm. Any `npm install` command you may have seen in older docs is obsolete.
+> ❌ **不需要 npm。** 此项目不再以 npm 包形式分发，旧文档中的 `npm install` 指令已废弃。
 
-1. 编辑 `~/.config/opencode/opencode.json`，在 `plugin` 数组中添加：
+---
+
+## Quick Install · 快速安装
+
+**Linux / macOS / WSL**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Wievondii/opencode-agent-team/master/install.sh | bash
+```
+
+**Windows (PowerShell)**
+
+```powershell
+irm https://raw.githubusercontent.com/Wievondii/opencode-agent-team/master/install.ps1 | iex
+```
+
+The installer:
+
+1. Clones this repo to a temp directory (skipped if you already cloned and ran the script locally).
+2. Copies `agents/*.md` → `~/.config/opencode/agents/`.
+3. Copies `templates/*.md` → `~/.config/opencode/templates/`.
+4. Seeds `agent-team/boulder.json` → `~/.config/opencode/agent-team/boulder.json` (only on first install — your runtime state is preserved on re-runs).
+5. Cleans up the temp directory.
+
+---
+
+## Verify · 验证安装
+
+```bash
+ls ~/.config/opencode/agents/         # → pm.md planner.md developer.md reviewer.md tester.md
+ls ~/.config/opencode/templates/      # → agent-team-log.md dev-workspace.md
+ls ~/.config/opencode/agent-team/     # → boulder.json
+```
+
+Open OpenCode in any project, press `Tab`, you should see `pm` (and the four subagents) in the picker.
+
+---
+
+## Update · 更新
+
+Just re-run the installer. It overwrites `agents/` and `templates/` but preserves `boulder.json` so your team state survives the upgrade.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Wievondii/opencode-agent-team/master/install.sh | bash
+```
+
+If you want a hard reset of state too, delete `boulder.json` first:
+
+```bash
+rm ~/.config/opencode/agent-team/boulder.json
+# then re-run the installer
+```
+
+---
+
+## Uninstall · 卸载
+
+```bash
+# Linux / macOS / WSL
+bash uninstall.sh
+
+# Windows (PowerShell)
+powershell -File uninstall.ps1
+```
+
+The uninstaller removes the 5 agent files, the 2 template files, and the `~/.config/opencode/agent-team/` directory.
+
+It deliberately leaves project-level `.opencode/` folders alone — those are user-owned runtime data. Remove them yourself if you want.
+
+---
+
+## OpenCode global config · OpenCode 全局配置
+
+`~/.config/opencode/opencode.json` should at minimum allow git commands so the Reviewer can `git add` / `git commit`:
 
 ```json
 {
-  "plugin": ["opencode-agent-team"]
+  "$schema": "https://opencode.ai/config.json",
+  "permission": {
+    "bash": {
+      "git*": "allow"
+    }
+  }
 }
 ```
 
-2. 重启 OpenCode
+See `opencode-sample.json` in the repo for the example used during development.
 
-插件会自动：
-- 安装 npm 包
-- 复制 agent 文件到 `~/.config/opencode/agents/`
-- 复制模板文件到 `~/.config/opencode/templates/`
-- 创建 `~/.config/opencode/agent-team/` 配置目录
+---
 
-3. 按 `Tab` 键选择 `pm` 开始使用
+## Troubleshooting · 故障排查
 
-## 更新
+### `pm` 不出现在 OpenCode 的 agent 列表里 · `pm` agent doesn't show up in OpenCode
 
-删除 `~/.config/opencode/agents/pm.md` 等文件，重启 OpenCode。
+1. Confirm the files exist:
+   ```bash
+   ls ~/.config/opencode/agents/pm.md
+   ```
+2. Make sure OpenCode is reading from `~/.config/opencode/`. Some packaged builds use a different XDG path; check OpenCode's logs / docs.
+3. Restart OpenCode.
 
-或删除版本文件强制更新：
+### Reviewer 报权限错误，无法 `git commit` · Reviewer can't run git commands
+
+Add the `permission.bash."git*": "allow"` entry to `~/.config/opencode/opencode.json` (see "Recommended OpenCode global config" above), then restart OpenCode.
+
+### 安装脚本提示找不到 git · Installer says git is missing
 
 ```bash
-rm ~/.config/opencode/agent-team/.opencode-agent-team-version
+# Debian / Ubuntu
+sudo apt install git
+
+# macOS
+brew install git
+
+# Windows
+winget install --id Git.Git -e
 ```
 
-## 更改模型
+### 模型不可用 · Model unavailable
 
-编辑 `~/.config/opencode/agents/` 下对应 agent 的 .md 文件，修改 frontmatter 中的 `model` 字段。
+The shipped defaults reference `xiaomi-token-plan-cn/mimo-v2.5(-pro)` and `opencode/deepseek-v4-flash-free`. If your OpenCode setup doesn't have those, edit each agent file under `~/.config/opencode/agents/` and change the `model:` line in frontmatter to a model your install does have (e.g. `anthropic/claude-opus-4`, `openai/gpt-4o`, etc).
 
-## 卸载
+### Windows: PowerShell 执行策略报错 · Execution policy blocks the script
 
-1. 从 `opencode.json` 的 `plugin` 数组中移除 `"opencode-agent-team"`
+Run PowerShell as your user (not admin) and either:
 
-2. 删除相关文件：
+```powershell
+# one-shot bypass
+powershell -ExecutionPolicy Bypass -File install.ps1
+
+# or persistently allow signed remote scripts
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+
+### 我装错了想从头来 · I want to start fresh
 
 ```bash
-rm ~/.config/opencode/agents/pm.md
-rm ~/.config/opencode/agents/planner.md
-rm ~/.config/opencode/agents/developer.md
-rm ~/.config/opencode/agents/reviewer.md
-rm ~/.config/opencode/agents/tester.md
-rm ~/.config/opencode/templates/agent-team-log.md
-rm ~/.config/opencode/templates/dev-workspace.md
+bash uninstall.sh        # or powershell -File uninstall.ps1
 rm -rf ~/.config/opencode/agent-team
+# re-run the installer
 ```
