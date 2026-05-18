@@ -34,9 +34,10 @@ if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
     Write-Err2 'Node.js >= 18 is required (for agent-team validation scripts). Install: https://nodejs.org/'
     exit 1
 }
-$NodeVersion = (& node -p 'process.versions.node.split(".")[0]')
-if ([int]$NodeVersion -lt 18) {
-    Write-Err2 ("Node.js >= 18 is required, found {0}" -f (& node -v))
+$NodeVersionRaw = (& node --version).Trim()
+$NodeMajor = ($NodeVersionRaw -replace '^v', '' -split '\.')[0]
+if ([int]$NodeMajor -lt 18) {
+    Write-Err2 ("Node.js >= 18 is required, found {0}" -f $NodeVersionRaw)
     exit 1
 }
 
@@ -135,7 +136,13 @@ Copy-Item -Force (Join-Path $SrcDir 'agent-team\scripts\lib\*.mjs') $ScriptsLibD
 
 $BoulderDst = Join-Path $TeamDst 'boulder.json'
 if (Test-Path $BoulderDst) {
-    $ExistingVer = (& node -e "try{const j=require('$($BoulderDst -replace '\\','\\\\')');console.log(j.schema_version||'1.x')}catch{console.log('unknown')}").Trim()
+    $ExistingVer = 'unknown'
+    try {
+        $boulder = Get-Content -Raw $BoulderDst | ConvertFrom-Json -ErrorAction Stop
+        if ($boulder.schema_version) { $ExistingVer = [string]$boulder.schema_version } else { $ExistingVer = '1.x' }
+    } catch {
+        $ExistingVer = 'unknown'
+    }
     if ($ExistingVer -ne '2.0') {
         Write-Warn2 "Existing boulder.json is $ExistingVer (v1). Backing up and re-seeding for v2.0."
         Copy-Item -Force $BoulderDst (Join-Path $TeamDst 'boulder.json.v1.bak')
