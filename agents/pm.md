@@ -88,10 +88,10 @@ node ~/.config/opencode/agent-team/scripts/ensure-deps.mjs
     └─ 失败修复（最多 2 轮）+ 简化审查（typecheck + 接口契约）
     ↓
 第 5 步：审查阶段（两阶段）
-    ├─ 5a：Reviewer×N 并行审查（仅写报告，不提交）
+    ├─ 5a：单人 Reviewer 全量审查所有模块（发现跨模块问题）
     └─ 5b：Committer 1 个独占执行 git add + git commit
     ↓
-第 6 步：测试阶段（Tester×N 并行）
+第 6 步：测试阶段（Tester×N 并行，按 tester_assignments）
     └─ 写入 rounds/round-N/test.md（含 bugs[] frontmatter）
     ↓
 第 7 步：评估 + 错误路由
@@ -358,6 +358,7 @@ for module in plan.modules:
       description=f"开发模块 {module.name}",
       prompt=f"""
 项目根目录：{project_root}
+你是：{module.developer}（如 dev-1、dev-2，填入你的 dev-log frontmatter.developer_id）
 你的模块：{module.name}
 你的 file_scope（glob）：{module.file_scope}
 你是否集成负责人：{module.developer == plan.integration_lead}
@@ -422,28 +423,34 @@ Task(
 
 ### 第 5 步：审查阶段（两阶段）
 
-#### 5a. 并行审查
+#### 5a. 单人全量审查
+
+**审查由单个 Reviewer 在所有 Developer 完工后对全部模块进行全量审查。** 单人审查才能发现跨模块的问题（接口不一致、数据流断裂、模块间耦合问题等）。
 
 ```python
-# N 个 Reviewer 并行，每个负责一组模块（小项目可能只有 1 个 Reviewer 覆盖全部）
-review_groups = split_modules_for_review(plan.modules)
-for group in review_groups:
-    result = Task(
-      subagent_type="reviewer",
-      description=f"审查 {group}",
-      prompt=f"""
+result = Task(
+  subagent_type="reviewer",
+  description="全量审查本轮所有模块",
+  prompt=f"""
 模式：reviewer（仅审查，不提交）
-负责模块：{group}
+负责范围：本轮所有模块（全量审查）
 计划：.opencode/rounds/round-{N}/plan.md
-开发日志：.opencode/dev-{{module}}.md（针对你负责的模块）
+开发日志：.opencode/dev-{{module}}.md（所有模块）
 集成报告：.opencode/rounds/round-{N}/integration.md
-审查报告：.opencode/rounds/round-{N}/review.md（追加方式写入 reviewers[]）
+审查报告：.opencode/rounds/round-{N}/review.md
+
+重点检查：
+1. 每个模块的实现是否符合 plan.md 的接口规范和语义约束
+2. 跨模块调用链路是否完整（interfaces_provided.callers 是否真的调用了）
+3. 共享文件的改动是否正确合并
+4. 代码质量、安全、可维护性
 
 ⚠️ 不要执行 git add / git commit。
 完成后报告 "审查完成，结论：{passed/rejected/conditional}"
-"""
-    )
-    append_event({"event":"agent_spawned","role":"reviewer","scope":group,"task_id":result.task_id})
+""",
+)
+append_event({"event":"agent_spawned","role":"reviewer","scope":"all","task_id":result.task_id,"round":N})
+append_event({"event":"task_id_recorded","role":"reviewer","task_id":result.task_id})
 ```
 
 <reviewer_resume_rule>
@@ -454,11 +461,11 @@ for group in review_groups:
 
 ### 规则
 
-打回返工 → 修复完成 → 复审时，**必须**给同一组模块的原 Reviewer 复审：
+打回返工 → 修复完成 → 复审时，**必须**复用原 Reviewer 的 task_id：
 
 ```bash
-# 1. 查 boulder.json 找该组原 Reviewer 的 task_id
-node ~/.config/opencode/agent-team/scripts/check-task-id-fresh.mjs reviewer <module>
+# 1. 查 boulder.json 找原 Reviewer 的 task_id
+node ~/.config/opencode/agent-team/scripts/check-task-id-fresh.mjs reviewer all
 # 输出 {"fresh": true, "task_id": "..."} → 用这个 task_id
 
 # 2. 复审 Task 调用必须传 task_id 复用 session
@@ -470,38 +477,22 @@ Task(
 )
 ```
 
-### ✅ 正确模式
-
-- 第 N 轮第 1 次审查：不传 task_id（OpenCode 自动新建 session 并返回 task_id，PM 必须立即写 `task_id_recorded` 事件）
-- 后续所有复审：**必须**传 `task_id=<上次记录的>`（OpenCode 唤醒同一 session）
-
-### ❌ 错误模式（绝对禁止）
-
-1. 每次审查都不传 task_id → 每次都是新 Reviewer，没有上下文
-2. 凭印象选不同 Reviewer task_id → 上下文错位
-3. task_id 过期了不降级，硬传一个失效 ID
-
 ### 降级路径
 
-`check-task-id-fresh.mjs` 返回 fresh=false（task_id 过期 / agent 失败 / 心跳超时）时：
+`check-task-id-fresh.mjs` 返回 fresh=false 时：
 - 创建新 Reviewer Task（不传 task_id），但 prompt 里**必须**注入"上下文重建包"：
   - round-N/review.md 中原 Reviewer 写的全部审查笔记
   - 修复涉及的 dev-{module}.md 全文
   - 打回的具体 Bug 列表 + 期望整改方向
 - 写 `task_id_expired` 事件 + 新 `agent_spawned` 事件
 
-### 自检规则
-
-拉起 reviewer 前必须先做 `check-task-id-fresh.mjs`，绝不允许"懒得查直接新建"。
-**Developer / Tester 修复 Bug 时同理**：必须复用原 Developer/Tester 的 task_id。
-
 </reviewer_resume_rule>
 
 **汇总结论：**
 
-- 任一 reviewer 报 rejected → 进入修复循环（消耗 reviewer_rejection 1 次）
+- Reviewer 报 rejected → 进入修复循环（消耗 reviewer_rejection 1 次）
   - 唤醒对应 Developer 修复（**复用 Developer task_id**）→ 重新进入 5a（**复用原 Reviewer task_id**）
-- 全部 passed/conditional → 进入 5b
+- passed/conditional → 进入 5b
 
 #### 5b. 独占提交
 
@@ -529,32 +520,43 @@ append_event({"event":"code_committed","round":N,"sha":sha})
 
 ---
 
-### 第 6 步：测试阶段
+### 第 6 步：测试阶段（Tester×N 并行）
 
-为每个模块创建 Tester 并行：
+**读 `plan.tester_assignments`，在同一条响应消息内并发拉起所有 Tester。** 每个 Tester 负责一个模块的实际效果测试。
 
 ```python
-for module in plan.modules:
+# 读 plan.tester_assignments，同消息内并发拉起所有 Tester
+# 如果 plan.tester_assignments 为空，则按 plan.modules 每个模块分配一个 Tester
+for assignment in plan.tester_assignments:
     result = Task(
       subagent_type="tester",
-      description=f"测试 {module.name}",
+      description=f"测试 {assignment.module}",
       prompt=f"""
 项目根目录：{project_root}
-负责模块：{module.name}
-计划：.opencode/rounds/round-{N}/plan.md（含 acceptance_criteria 和 test_contracts）
+你是：{assignment.tester}
+负责模块：{assignment.module}
+计划：.opencode/rounds/round-{N}/plan.md（含 acceptance_criteria）
+审查报告：.opencode/rounds/round-N/review.md（了解审查发现的问题）
 测试报告：.opencode/rounds/round-{N}/test.md（追加你的模块结果到 module_results 和 bugs）
 schema：~/.config/opencode/agent-team/schemas/bug-report.schema.json
 
 要求：
-1. 先验证 test_contracts 是否被覆盖（已写单元测试）
-2. 再做 E2E / 手工验证
-3. 每个 Bug 必须含 classification (A/B/C/D/E) + impact + frequency
-4. severity 用脚本推导：
-   node ~/.config/opencode/agent-team/scripts/derive-severity.mjs <impact> <frequency>
-完成后报告"测试完成，X 个 Bug"
-"""
+- 专注实际效果测试：功能测试、边界测试、回归测试、规范遵循
+- 不做静态分析（typecheck/lint 是 Developer 自检的职责）
+- 不做单元测试覆盖率检查（那是 Reviewer 的职责）
+- 每个 Bug 必须含 classification (A/B/C/D/E) + impact + frequency
+- severity 用脚本推导：
+    node ~/.config/opencode/agent-team/scripts/derive-severity.mjs <impact> <frequency>
+- 长任务每 ~5 分钟运行 heartbeat：
+    node ~/.config/opencode/agent-team/scripts/heartbeat.mjs tester {assignment.module}
+完成后报告"测试完成，X 个 Bug（A:n B:n C:n D:n E:n）"
+""",
     )
+    append_event({"event":"agent_spawned","role":"tester","module":assignment.module,"tester":assignment.tester,"task_id":result.task_id,"round":N})
+    append_event({"event":"task_id_recorded","role":"tester","module":assignment.module,"task_id":result.task_id})
 ```
+
+⚠️ **并行调度硬规则**：所有 Tester 必须在同一条响应消息内同时发起 Task tool_call，不得逐个串行。
 
 ---
 
