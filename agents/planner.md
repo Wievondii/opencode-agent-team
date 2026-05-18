@@ -70,17 +70,7 @@ execution_strategy:         # 🔑 必填：明确告诉 PM 如何调度 Develop
   mode: parallel            # parallel | serial | grouped
   parallel_groups: []       # 仅 mode=grouped 时填，每组同时执行，组间串行
   rationale: "三个模块完全独立，可同消息并发拉起"
-tester_assignments:         # 🔑 必填：每个模块分配一个 Tester，PM 按此调度
-  - tester: tester-1
-    module: <module-name>
-    order: 1                 # 唤起顺序，order=1 的 Tester 负责启动 dev server
-    starts_server: true      # 仅 order=1 为 true，其他为 false
-    test_url: "/"            # 该 Tester 测试的 URL 路径（避免多 Tester 抢占同一页面）
-  - tester: tester-2
-    module: <module-name>
-    order: 2
-    starts_server: false
-    test_url: "/profile"
+tester_assignments:         # 不再需要，测试由单个 Tester 覆盖所有模块
 modules:
   - name: <module-name>
     developer: dev-1         # dev-N 形式
@@ -288,29 +278,9 @@ execution_strategy:
 
 **bias 向 parallel**：Plan 阶段已定义接口契约，Developer 可基于契约 mock 协作方实现，无需等待。
 
-#### 填 `tester_assignments`（必填）
+#### Tester 说明
 
-每个模块分配一个 Tester。**必须规划测试隔离**：
-
-```yaml
-tester_assignments:
-  - tester: tester-1
-    module: auth
-    order: 1              # 第一个唤起，负责启动 dev server
-    starts_server: true
-    test_url: "/login"    # 该 Tester 测试的页面/API 路径
-  - tester: tester-2
-    module: profile
-    order: 2
-    starts_server: false  # 不启动 server，等 tester-1 启动后直接用
-    test_url: "/profile"  # 不同路径，避免抢占同一页面
-```
-
-规则：
-- `order=1` 的 Tester 负责执行 `npm run dev` 等启动命令，`starts_server: true`
-- 其他 Tester `starts_server: false`，直接使用已启动的服务
-- 每个 Tester 的 `test_url` 必须不同，避免并行时抢占同一页面的输入/点击事件
-- PM 按 order 顺序唤起：先唤起 order=1（等 server 就绪），再并行唤起其余 Tester
+不需要填 `tester_assignments`。测试由单个 Tester 覆盖所有模块，避免并行测试的隔离问题。
 
 #### Reviewer 说明
 
@@ -345,12 +315,9 @@ tester_assignments:
 |---------|--------|--------|---------|-------------|
 | AuthService.login | dev-1 | dev-2 | 用户登录时 | profile/Page.vue:45 |
 
-## Tester 分配
+## 测试说明
 
-| Tester | 负责模块 | 顺序 | 启动服务 | 测试路径 |
-|--------|---------|------|---------|---------|
-| tester-1 | auth | 1 | ✅ | /login |
-| tester-2 | profile | 2 | ❌ | /profile |
+单个 Tester 覆盖所有模块，按 acceptance_criteria 逐条验证。
 ```
 
 ---
@@ -502,7 +469,6 @@ node ~/.config/opencode/agent-team/scripts/check-file-conflicts.mjs \
 5. **integration_lead 必须存在于 modules.developer 列表中**
 6. **每个 interfaces_provided 至少有 1 个 test_contracts**（PM 会软校验）
 7. **关键决策必须写入 decisions.md**
-8. **tester_assignments 必填**：每个 module 必须有对应的 tester 分配
-9. **markdown 部分必须包含并行批次表和 Tester 分配表**
+8. **markdown 部分必须包含模块划分表和接口调用关系表**
 
 </constraints>

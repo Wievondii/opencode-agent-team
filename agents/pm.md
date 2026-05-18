@@ -84,7 +84,7 @@ node ~/.config/opencode/agent-team/scripts/ensure-deps.mjs
     ├─ 5a：单人 Reviewer 全量审查所有模块（发现跨模块问题）
     └─ 5b：Committer 1 个独占执行 git add + git commit
     ↓
-第 6 步：测试阶段（Tester×N 并行，按 tester_assignments）
+第 6 步：测试阶段（单个 Tester）
     └─ 写入 rounds/round-N/test.md（含 bugs[] frontmatter）
     ↓
 第 7 步：评估 + 错误路由
@@ -323,7 +323,6 @@ Planner 制定计划（串行）
 1. mode=parallel 时，**必须**在同一条 assistant 消息内发起所有 Developer 的 Task tool_call
 2. 每个 Task 发起后**立即**记录 task_id 到事件日志（用于中断恢复）
 3. 禁止逐个串行调用、禁止把多模块塞给单个 Developer
-4. Tester 同理：所有 Tester 必须在同一条消息内并发拉起
 
 </parallel_dispatch_protocol>
 
@@ -515,60 +514,35 @@ append_event({"event":"code_committed","round":N,"sha":sha})
 
 ---
 
-### 第 6 步：测试阶段（Tester×N 按序启动）
+### 第 6 步：测试阶段（单个 Tester）
 
-**读 `plan.tester_assignments`，按 order 顺序调度 Tester。** order=1 的 Tester 先启动（负责启动 dev server），就绪后再并行拉起其余 Tester。
+**拉起 1 个 Tester 测试所有模块。** 单个 Tester 避免并行测试的隔离问题（端口冲突、session 互踢、页面状态污染）。
 
 ```
-# 按 order 排序 tester_assignments
-sorted_assignments = sort(plan.tester_assignments, by=order)
-
-# 第一步：先唤起 order=1 的 Tester（负责启动 dev server）
-first = sorted_assignments[0]
 result = Task(
-  description: "测试 {first.module}（启动服务）",
+  description: "测试本轮所有模块",
   prompt: |
     项目根目录：{project_root}
-    你是：{first.tester}
-    负责模块：{first.module}
-    你的测试路径：{first.test_url}
-    你负责启动 dev server：是（执行 npm run dev 等，确认服务就绪后开始测试）
-    计划：.opencode/rounds/round-{N}/plan.md
+    计划：.opencode/rounds/round-{N}/plan.md（含 acceptance_criteria）
+    审查报告：.opencode/rounds/round-{N}/review.md
     测试报告：.opencode/rounds/round-{N}/test.md
+    schema：~/.config/opencode/agent-team/schemas/bug-report.schema.json
 
     要求：
-    - 先启动 dev server，确认服务就绪
-    - 只测试你的 test_url 路径，不要访问其他 Tester 的路径
+    - 启动 dev server，逐模块验证实际效果
+    - 专注功能测试、边界测试、回归测试、规范遵循
     - 每个 Bug 必须含 classification (A/B/C/D/E) + impact + frequency + responsible_module
+    - responsible_module 必须标注 Bug 所属模块（PM 据此路由给责任 Developer）
+    - severity 用脚本推导：
+        node ~/.config/opencode/agent-team/scripts/derive-severity.mjs <impact> <frequency>
     完成后报告"测试完成，X 个 Bug（A:n B:n C:n D:n E:n）"
   subagent_type: "tester"
 )
-boulder.task_ids["tester_{first.module}"] = result.task_id
 
-# 第二步：server 就绪后，并行拉起其余 Tester（同一条消息内）
-for assignment in sorted_assignments[1:]:
-  result = Task(
-    description: "测试 {assignment.module}",
-    prompt: |
-      项目根目录：{project_root}
-      你是：{assignment.tester}
-      负责模块：{assignment.module}
-      你的测试路径：{assignment.test_url}
-      你负责启动 dev server：否（服务已由 tester-1 启动，直接测试）
-      计划：.opencode/rounds/round-{N}/plan.md
-      测试报告：.opencode/rounds/round-{N}/test.md
-
-      要求：
-      - 不要执行 npm run dev，服务已启动
-      - 只测试你的 test_url 路径，不要访问其他 Tester 的路径
-      - 每个 Bug 必须含 classification (A/B/C/D/E) + impact + frequency + responsible_module
-      完成后报告"测试完成，X 个 Bug（A:n B:n C:n D:n E:n）"
-    subagent_type: "tester"
-  )
-  boulder.task_ids["tester_{assignment.module}"] = result.task_id
+# 🔑 立即记录 task_id
+boulder.task_ids["tester"] = result.task_id
+append_event({"event":"agent_spawned","role":"tester","task_id":result.task_id,"round":N})
 ```
-
-⚠️ **第二步的所有 Task 必须在同一条 assistant 消息内同时发出。**
 
 ---
 
