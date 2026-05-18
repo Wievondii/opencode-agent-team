@@ -1,51 +1,24 @@
 {
-  "version": "1.0.0",
-  "active_plan": null,
+  "schema_version": "2.0",
   "current_round": 0,
+  "status": "idle",
   "started_at": null,
   "last_activity": null,
-  "status": "idle",
+  "active_plan": null,
+  "round_baseline_tag": null,
+  "budgets": {
+    "reviewer_rejection": { "used": 0, "max": 3 },
+    "bug_fix_a": { "used": 0, "max": 3 },
+    "bug_fix_b": { "used": 0, "max": 2 },
+    "round_total": { "used": 0, "max": 8 }
+  },
   "agents": {
-    "planner": {
-      "status": "idle",
-      "session_id": null,
-      "task_id": null,
-      "started_at": null,
-      "completed_at": null,
-      "output": null
-    },
-    "developer": {
-      "status": "idle",
-      "instances": [],
-      "modules": []
-    },
-    "reviewer": {
-      "status": "idle",
-      "session_id": null,
-      "task_id": null,
-      "conclusion": null
-    },
-    "tester": {
-      "status": "idle",
-      "session_id": null,
-      "task_id": null,
-      "started_at": null,
-      "completed_at": null,
-      "result": null
-    }
-  },
-  "tasks": {
-    "total": 0,
-    "completed": 0,
-    "in_progress": 0,
-    "pending": 0
-  },
-  "task_ids": {
-    "planner": null,
+    "planner": { "status": "idle", "task_id": null },
     "developers": {},
-    "reviewer": null,
-    "tester": null
+    "integration_lead": null,
+    "reviewers": [],
+    "testers": []
   },
-  "errors": [],
-  "learnings": []
+  "events_offset": 0,
+  "escalation": null
 }

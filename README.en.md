@@ -1,4 +1,4 @@
-<p align="right"><a href="./README.md">简体中文 README</a></p>
+<p align="right"><a href="./README.md">简体中文 README</a> · <strong>v2.0</strong></p>
 
 # OpenCode Agent Team
 
@@ -6,6 +6,10 @@
   <strong>A multi-agent dev team that runs inside OpenCode</strong><br>
   Planner plans · Multiple Developers code in parallel · Reviewer guards quality · Tester verifies · PM orchestrates
 </p>
+
+> **v2.0 is a breaking upgrade.** 18 core improvements: 3 independent budgets, 5-class error routing, parallel-write conflict protection, strict YAML frontmatter schemas, append-only event log, etc. Migration: see [MIGRATION.md](./MIGRATION.md). The Chinese [README.md](./README.md) reflects the full v2.0 design; this English README is being progressively updated below.
+
+**Prerequisites:** Node.js >= 18 (required for v2.0 validation scripts), Git, OpenCode.
 
 ---
 
@@ -15,13 +19,19 @@ A bundle of [OpenCode](https://opencode.ai) subagent configs that splits the dev
 
 | Role | Responsibility |
 |---|---|
-| **PM** (Project Manager) | Receives requirements, dispatches the team, maintains `boulder.json` persistent state |
-| **Planner** | Analyzes the request, defines interface / style specs, splits modules, assigns file ownership |
-| **Developer** ×N | Implements assigned modules **in parallel**, writes a private `dev-{module}.md` log |
-| **Reviewer** | Reviews all modules serially; runs `git add` + `git commit` once approved |
-| **Tester** ×N | Runs tests in parallel, classifies bugs as "in-module" vs "cross-module" |
+| **PM** | Receives requirements, dispatches the team, maintains the event log + `boulder.json` view, routes errors |
+| **Planner** | Analyzes the request, defines interface / style specs + semantic_constraints, splits modules, produces round-plan.md |
+| **Developer** ×N | Implements assigned modules **in parallel**; private `dev-{module}.md` with YAML frontmatter; must paste `self_check` evidence |
+| **Reviewer** | Two modes: `reviewer` (parallel review, write report only) + `committer` (exclusive `git add` + `git commit`) |
+| **Tester** ×N | Runs tests in parallel, classifies bugs as A/B/C/D/E; severity auto-derived from impact × frequency matrix |
 
-**Killer feature: Task + `task_id` for sleep/wake.** When the Tester finds a bug, the PM uses the recorded `task_id` to **wake the same Developer session** that wrote the original code — full context preserved, no log replay required.
+**Core mechanics:**
+- **task_id persistence** — when the Tester finds a bug, PM wakes the original Developer session via the recorded task_id; full context preserved.
+- **Three independent budgets** — `reviewer_rejection` (3) / `bug_fix_a` (3) / `bug_fix_b` (2) + `round_total` (8). Class-B bugs no longer eat the same pool as reviewer rework.
+- **Append-only event log** — all boulder.json changes go through `boulder-events.jsonl` + `rebuild-boulder.mjs`; no concurrency races.
+- **Hard schema validation** — dev-log / round-plan / bug-report all validated against JSON Schema via Node.js scripts; non-conforming outputs are rejected immediately.
+- **Shared-file coordinator** — to prevent parallel write conflicts: shared files get a single `coordinator`; other devs write `shared_file_requests` instead of editing directly. PM enforces with `check-file-conflicts.mjs`.
+- **Rollback** — every round starts with `git tag round-N-baseline`; on budget exhaustion, one-click `git reset` is offered.
 
 ---
 
